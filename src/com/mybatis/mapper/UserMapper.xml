@@ -6,6 +6,13 @@ PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
 注意：使用Mapper代理开发，namespace有特殊的作用,等于mapper接口的地址
  -->
 <mapper namespace="com.mybatis.mapper.UserMapper">
+<!-- 开启本mapper的namespace下的二级缓存 
+type：指定cache接口的实现类类型，mybatis默认使用PerpetualCache
+要和ehcache整合，需要配置type为ehcache实现cache接口的类型
+整合ehcache配置type即可
+-->
+	<cache type="org.mybatis.caches.ehcache.EhcacheCache"/>
+	
 <!-- SQL标签：
 定义SQL片段
 id:sql片段的唯一标识

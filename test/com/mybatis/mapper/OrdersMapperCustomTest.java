@@ -33,26 +33,60 @@ public class OrdersMapperCustomTest {
 		SqlSession sqlSession = sqlSessionFactory.openSession();
 		OrdersMapperCustom mapper = sqlSession.getMapper(OrdersMapperCustom.class);
 		List<Orders> list = mapper.findOrdersUserLazyLoading();
-		//遍历上边的订单列表
-		for(Orders orders :list) {
+		// 遍历上边的订单列表
+		for (Orders orders : list) {
 			User user = orders.getUser();
 			System.out.println(user);
 		}
 		sqlSession.close();
 	}
-	//一级缓存测试
+
+	// 一级缓存测试
 	@Test
-	public void testCache1() throws Exception{
+	public void testCache1() throws Exception {
 		SqlSession sqlSession = sqlSessionFactory.openSession();
 		UserMapper userMapper = sqlSession.getMapper(UserMapper.class);
-		//下边查询使用一个sqlsession
-		//第一次发起请求，查询id为1的用户
+		// 下边查询使用一个sqlsession
+		// 第一次发起请求，查询id为1的用户
 		User user1 = userMapper.findUserById(10);
 		System.out.println(user1);
-		//第二次发起请求，查询id为1的用户
+		// 更新User1的信息
+		user1.setUsername("测试用户222");
+		userMapper.updateUser(user1);
+		// 只有提交才会清空缓存
+		sqlSession.commit();
+		// 第二次发起请求，查询id为1的用户
 		User user2 = userMapper.findUserById(10);
 		System.out.println(user2);
 		sqlSession.close();
 	}
+	// 二级缓存测试
 
+	@Test
+	public void testCache2() throws Exception {
+		SqlSession sqlSession1 = sqlSessionFactory.openSession();
+		SqlSession sqlSession2 = sqlSessionFactory.openSession();
+		SqlSession sqlSession3 = sqlSessionFactory.openSession();
+		UserMapper userMapper1 = sqlSession1.getMapper(UserMapper.class);
+		// 下边查询使用一个sqlsession
+		// 第一次发起请求，查询id为1的用户
+		User user1 = userMapper1.findUserById(10);
+		System.out.println(user1);
+		// 释放资源，这里执行关闭操作，将sqlsession的数据写到二级缓存区域
+		sqlSession1.close();
+		// 执行提交操作，清空UserMapper下的二级缓存
+		UserMapper userMapper3 = sqlSession3.getMapper(UserMapper.class);
+		User user = userMapper3.findUserById(10);
+		user.setUsername("小胖");
+		userMapper3.updateUser(user);
+		sqlSession3.commit();
+		sqlSession3.close();
+
+		UserMapper userMapper2 = sqlSession2.getMapper(UserMapper.class);
+		// 第二次发起请求，查询id为1的用户
+		User user2 = userMapper2.findUserById(10);
+		System.out.println(user2);
+		// 释放资源
+		sqlSession2.close();
+	}
 }
